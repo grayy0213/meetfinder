@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汇合点推荐 · MeetFinder</title>
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #1a1a26;
+  --bg-card-hover: #222233;
+  --bg-input: #16161f;
+  --border: rgba(255,255,255,0.08);
+  --border-focus: rgba(99,102,241,0.5);
+  --text-primary: #f0f0f5;
+  --text-secondary: #8888a0;
+  --text-muted: #555570;
+  --accent: #6366f1;
+  --accent-light: #818cf8;
+  --accent-glow: rgba(99,102,241,0.3);
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gradient-1: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --gradient-2: linear-gradient(135deg, #ec4899, #f43f5e);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+.bg-effects {
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  z-index: 0; pointer-events: none; overflow: hidden;
+}
+.bg-effects::before {
+  content: ''; position: absolute; top:-50%; left:-50%;
+  width:200%; height:200%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.08) 0%, transparent 50%),
+             radial-gradient(ellipse at 70% 80%, rgba(236,72,153,0.06) 0%, transparent 50%);
+  animation: bgMove 20s ease-in-out infinite alternate;
+}
+@keyframes bgMove { to { transform: translate(5%, 5%); } }
+
+.container {
+  position: relative; z-index: 1;
+  max-width: 960px; margin: 0 auto; padding: 32px 20px 60px;
+}
+
+/* Header */
+.header { text-align:center; margin-bottom:36px; }
+.header-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width:64px; height:64px; border-radius:20px;
+  background: var(--gradient-1); font-size:28px; margin-bottom:16px;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+}
+.header h1 { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+.header p { color: var(--text-secondary); font-size:14px; margin-top:6px; }
+
+/* Glass Card */
+.card {
+  background: var(--bg-card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 20px;
+  transition: var(--transition);
+}
+.card:hover { border-color: rgba(255,255,255,0.12); }
+.card-title {
+  font-size: 15px; font-weight:600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing:1px; margin-bottom:18px;
+  display: flex; align-items: center; gap:8px;
+}
+
+/* Inputs */
+.input-group { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.input-label {
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px; color:#fff; flex-shrink:0;
+}
+.person-a { background: linear-gradient(135deg,#6366f1,#818cf8); }
+.person-b { background: linear-gradient(135deg,#06b6d4,#22d3ee); }
+.person-c { background: linear-gradient(135deg,#22c55e,#4ade80); }
+.person-d { background: linear-gradient(135deg,#f59e0b,#fbbf24); }
+.person-e { background: linear-gradient(135deg,#ec4899,#f43f5e); }
+.person-f { background: linear-gradient(135deg,#8b5cf6,#a78bfa); }
+.person-g { background: linear-gradient(135deg,#14b8a6,#2dd4bf); }
+.person-h { background: linear-gradient(135deg,#f97316,#fb923c); }
+
+.input-field {
+  flex:1; padding:10px 14px;
+  background: var(--bg-input); border:1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary);
+  font-size:14px; transition: var(--transition); outline:none;
+}
+.input-field:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+.input-field::placeholder { color: var(--text-muted); }
+
+.btn-remove {
+  width:32px; height:32px; border-radius:8px; border:none;
+  background: rgba(239,68,68,0.15); color:var(--danger);
+  font-size:18px; cursor:pointer; transition: var(--transition);
+  display:flex; align-items:center; justify-content:center;
+}
+.btn-remove:hover { background: rgba(239,68,68,0.3); }
+
+/* Buttons */
+.btn {
+  padding:10px 20px; border-radius: var(--radius-sm);
+  border:none; font-size:14px; font-weight:600;
+  cursor:pointer; transition: var(--transition);
+  display:inline-flex; align-items:center; gap:6px;
+}
+.btn-primary {
+  background: var(--gradient-1); color:#fff;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+}
+.btn-primary:hover { box-shadow: 0 6px 24px rgba(99,102,241,0.5); transform: translateY(-1px); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-secondary { background: var(--bg-input); color:var(--text-secondary); border:1px solid var(--border); }
+.btn-secondary:hover { border-color:rgba(255,255,255,0.15); color:var(--text-primary); }
+.btn-ghost { background:none; color:var(--text-secondary); }
+.btn-ghost:hover { color:var(--accent-light); }
+
+.action-bar { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+/* Presets */
+.presets { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.preset-chip {
+  padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500;
+  background:var(--bg-input); border:1px solid var(--border);
+  color:var(--text-secondary); cursor:pointer; transition: var(--transition);
+}
+.preset-chip:hover { border-color:var(--accent); color:var(--accent-light); }
+
+/* Form row */
+.form-row { display:flex; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.form-group { display:flex; flex-direction:column; gap:4px; }
+.form-group label { font-size:12px; color:var(--text-muted); font-weight:500; }
+.form-group input { width:100%; }
+
+/* Loading */
+.loading-overlay {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(10,10,15,0.92); z-index:1000;
+  display:none; align-items:center; justify-content:center; flex-direction:column; gap:20px;
+}
+.loading-overlay.active { display:flex; }
+.spinner {
+  width:48px; height:48px; border:3px solid rgba(99,102,241,0.2);
+  border-top-color:var(--accent); border-radius:50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size:16px; font-weight:600; }
+.loading-step { font-size:13px; color:var(--text-secondary); }
+
+/* Progress bar */
+.progress-bar { width:240px; height:4px; background:var(--bg-input); border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; width:0%; background:var(--gradient-1); border-radius:2px; transition: width 0.3s; }
+
+/* Results */
+.results-section { display:none; }
+.results-section.active { display:block; animation: fadeUp 0.5s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+.winner-card {
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(236,72,153,0.08));
+  border:1px solid rgba(99,102,241,0.25);
+  border-radius: var(--radius); padding:28px; margin-bottom:20px;
+}
+.winner-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 12px; border-radius:20px;
+  background:rgba(245,158,11,0.15); color:var(--warning);
+  font-size:12px; font-weight:600; margin-bottom:14px;
+}
+.winner-name { font-size:22px; font-weight:700; margin-bottom:6px; }
+.winner-addr { color:var(--text-secondary); font-size:14px; margin-bottom:4px; }
+.winner-tel { color:var(--success); font-size:13px; }
+
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px; }
+.stat-box {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:16px; text-align:center;
+}
+.stat-value { font-size:28px; font-weight:700; }
+.stat-value small { font-size:13px; font-weight:400; margin-left:2px; color:var(--text-muted); }
+.stat-label { font-size:12px; color:var(--text-muted); margin-top:4px; }
+.color-warn { color:var(--warning); }
+.color-good { color:var(--success); }
+.color-accent { color:var(--accent-light); }
+.color-danger { color:var(--danger); }
+
+/* Commute list */
+.commute-item {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; margin-bottom:8px;
+  background:var(--bg-input); border-radius:var(--radius-sm);
+  border:1px solid var(--border); transition: var(--transition);
+}
+.commute-item:hover { border-color:rgba(255,255,255,0.12); }
+.commute-label {
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px; color:#fff; flex-shrink:0;
+}
+.commute-from { flex:1; font-size:13px; color:var(--text-secondary); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.commute-route { flex:2; display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px; }
+.commute-time { font-size:20px; font-weight:700; flex-shrink:0; min-width:60px; text-align:right; }
+
+/* Route chips */
+.route-chip {
+  display:inline-flex; align-items:center; gap:3px;
+  padding:2px 8px; border-radius:6px; font-size:11px; font-weight:500;
+  background:rgba(99,102,241,0.12); color:var(--accent-light);
+  white-space:nowrap;
+}
+.chip-walk { background:rgba(34,197,94,0.12); color:#4ade80; }
+.chip-transit { background:rgba(99,102,241,0.12); color:var(--accent-light); }
+.chip-bike { background:rgba(34,197,94,0.15); color:#4ade80; }
+.chip-car { background:rgba(6,182,212,0.15); color:#22d3ee; }
+.route-arrow { color:var(--text-muted); font-size:11px; }
+
+/* Reason list */
+.reason-list { padding-left:18px; }
+.reason-list li { color:var(--text-secondary); font-size:13px; margin-bottom:6px; }
+
+/* Ranking table */
+.rank-table { width:100%; border-collapse:collapse; font-size:13px; }
+.rank-table th { text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:500; border-bottom:1px solid var(--border); font-size:12px; }
+.rank-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+.rank-row-best { background:rgba(245,158,11,0.06); }
+.rank-num { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; font-weight:700; font-size:13px; }
+.rank-1 { background:rgba(245,158,11,0.2); color:var(--warning); }
+.rank-other { background:var(--bg-input); color:var(--text-muted); }
+.rank-name { max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* Footer */
+.footer { text-align:center; padding:32px 0 12px; color:var(--text-muted); font-size:12px; }
+.footer a { color:var(--accent-light); text-decoration:none; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px);
+  padding:12px 24px; border-radius:var(--radius-sm);
+  background:var(--bg-card); border:1px solid var(--border);
+  color:var(--text-primary); font-size:14px; z-index:2000;
+  box-shadow:var(--shadow-lg); opacity:0; transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  pointer-events:none; white-space:nowrap;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.error { border-color:rgba(239,68,68,0.4); color:var(--danger); }
+
+/* API Key input */
+.api-key-group { margin-bottom:16px; }
+.api-key-group label { font-size:12px; color:var(--text-muted); font-weight:500; display:block; margin-bottom:4px; }
+.api-key-input { width:100%; padding:10px 14px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-size:14px; outline:none; font-family:monospace; letter-spacing:0.5px; }
+.api-key-input:focus { border-color:var(--border-focus); box-shadow:0 0 0 3px var(--accent-glow); }
+.api-key-input::placeholder { color:var(--text-muted); letter-spacing:0; font-family:inherit; }
+
+/* Mode badge */
+.mode-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;
+}
+.mode-walk { background:rgba(34,197,94,0.15); color:#4ade80; }
+.mode-bike { background:rgba(34,197,94,0.2); color:#22c55e; }
+.mode-car { background:rgba(6,182,212,0.15); color:#22d3ee; }
+.mode-transit { background:rgba(99,102,241,0.15); color:#818cf8; }
+
+/* Responsive */
+@media (max-width:640px) {
+  .commute-item { flex-wrap:wrap; gap:8px; }
+  .commute-route { flex-basis:100%; order:4; }
+  .stats-row { grid-template-columns:repeat(2,1fr); }
+  .form-row { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-effects"></div>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">📍</div>
+    <h1>汇合点推荐</h1>
+    <p>输入多地出发地，自动推荐最优汇合场馆 · 步行/骑行/开车/公交 自动选最快</p>
+  </div>
+
+  <!-- Settings Card -->
+  <div class="card">
+    <div class="card-title">⚙️ 设置</div>
+
+    <div class="api-key-group">
+      <label>高德 Web API Key（必填）</label>
+      <input class="api-key-input" id="apiKey" type="text" placeholder="请输入你的高德 Web API Key" value="62e28bb100f16a04287c272f1ca63816">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" style="flex:2;">
+        <label>搜索关键词</label>
+        <input class="input-field" id="keyword" type="text" value="羽毛球馆" placeholder="如：羽毛球馆、咖啡厅">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>搜索数量（5-30）</label>
+        <input class="input-field" id="maxVenues" type="number" value="15" min="5" max="30">
+      </div>
+    </div>
+
+    <div class="presets">
+      <span class="preset-chip" onclick="loadPreset('badminton')">🏸 羽毛球馆</span>
+      <span class="preset-chip" onclick="loadPreset('coffee')">☕ 咖啡厅</span>
+      <span class="preset-chip" onclick="loadPreset('clear')">🧹 清空</span>
+    </div>
+  </div>
+
+  <!-- Locations Card -->
+  <div class="card">
+    <div class="card-title">📍 出发地（至少 2 个）</div>
+    <div id="locationList"></div>
+    <div class="action-bar">
+      <button class="btn btn-secondary" onclick="addLocation()">＋ 添加出发地</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" id="computeBtn" onclick="startCompute()">📍 开始计算</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">正在计算...</div>
+    <div class="loading-step" id="loadingStep"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+
+    <!-- Winner -->
+    <div class="winner-card">
+      <div class="winner-badge">🏆 推荐汇合点</div>
+      <div class="winner-name" id="winnerName"></div>
+      <div class="winner-addr" id="winnerAddr"></div>
+      <div class="winner-tel" id="winnerTel"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- Commute -->
+    <div class="card">
+      <div class="card-title">🗺️ 每人通勤详情</div>
+      <div id="commuteList"></div>
+    </div>
+
+    <!-- Reasons -->
+    <div class="card">
+      <div class="card-title">💡 推荐理由</div>
+      <ul class="reason-list" id="reasonList"></ul>
+    </div>
+
+    <!-- Ranking -->
+    <div class="card">
+      <div class="card-title">📊 候选场馆排名</div>
+      <div style="overflow-x:auto;">
+        <table class="rank-table">
+          <thead><tr><th>排名</th><th>场馆名称</th><th>最大耗时</th><th>总耗时</th><th>人均</th></tr></thead>
+          <tbody id="rankBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    MeetFinder · 纯前端版 · 数据来自高德地图 API<br>
+    步行 / 骑行 / 开车 / 公交，自动选择最快交通方式
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const PERSON_COLORS = ['a','b','c','d','e','f','g','h'];
+const LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let locationCount = 0;
+const AMAP_KEY = ''; // will be read from input
+
+function addLocation(addr) {
+  addr = addr || '';
+  var idx = locationCount++;
+  var colorClass = PERSON_COLORS[idx % PERSON_COLORS.length];
+  var label = LABELS[idx];
+  var list = document.getElementById('locationList');
+  var row = document.createElement('div');
+  row.className = 'input-group location-row';
+  row.id = 'loc-' + idx;
+  row.innerHTML =
+    '<div class="input-label person-' + colorClass + '">' + label + '</div>' +
+    '<input class="input-field" id="addr-' + idx + '" value="' + (addr || '') + '" placeholder="输入地址，如：杭州市城西银泰城">' +
+    (idx >= 2 ? '<button class="btn-remove" onclick="removeLocation(' + idx + ')">&times;</button>' : '');
+  list.appendChild(row);
+}
+
+function removeLocation(idx) {
+  var row = document.getElementById('loc-' + idx);
+  if (row) row.remove();
+}
+
+function getLocations() {
+  var locs = [];
+  var rows = document.querySelectorAll('#locationList .input-group');
+  for (var i = 0; i < rows.length; i++) {
+    var input = rows[i].querySelector('input');
+    if (input && input.value.trim()) {
+      locs.push({ label: LABELS[i], address: input.value.trim() });
+    }
+  }
+  return locs;
+}
+
+function showLoading(text, step) {
+  document.getElementById('loadingText').textContent = text || '';
+  document.getElementById('loadingStep').textContent = step || '';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('loading').classList.add('active');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('active');
+}
+function updateProgress(pct) {
+  document.getElementById('progressFill').style.width = Math.min(100, pct) + '%';
+}
+
+function showToast(msg, isError) {
+  var el = document.getElementById('toast');
+  el.innerHTML = msg;
+  el.className = 'toast' + (isError ? ' error' : '');
+  requestAnimationFrame(function() { el.classList.add('show'); });
+  setTimeout(function() { el.classList.remove('show'); }, 3500);
+}
+
+function sleep(ms) {
+  return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+// ========== AMAP API CALLS (JSONP) ==========
+function amapRequest(endpoint, params, apiKey) {
+  return new Promise(function(resolve, reject) {
+    var cbName = 'amap_cb_' + Math.random().toString(36).substring(2, 10);
+    var url = 'https://restapi.amap.com/v3/' + endpoint + '?';
+    var p = Object.assign({}, params, { key: apiKey, output: 'JSON', callback: cbName });
+    var parts = [];
+    for (var k in p) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(p[k]));
+    url += parts.join('&');
+
+    window[cbName] = function(data) { resolve(data); cleanup(); };
+    var script = document.createElement('script');
+    script.src = url;
+    script.onerror = function() { cleanup(); reject(new Error('网络请求失败')); };
+    document.head.appendChild(script);
+
+    function cleanup() {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+  });
+}
+
+// ========== GEOCODE ==========
+async function geocode(address, city, apiKey) {
+  try {
+    var data = await amapRequest('geocode/geo', { address: address, city: city }, apiKey);
+    if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
+      var g = data.geocodes[0];
+      var coords = g.location.split(',');
+      return { label:'', address: address, name: g.formatted_address || address, lng: parseFloat(coords[0]), lat: parseFloat(coords[1]) };
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ========== PLACE AROUND ==========
+async function placeAround(lng, lat, keyword, apiKey, limit) {
+  try {
+    var data = await amapRequest('place/around', {
+      location: lng + ',' + lat,
+      keywords: keyword,
+      types: '',
+      citylimit: 'false',
+      radius: 5000,
+      offset: limit || 15,
+      page: 1
+    }, apiKey);
+    if (data.status === '1' && data.pois) {
+      return data.pois.map(function(p) {
+        var c = (p.location || '').split(',');
+        return { name: p.name, address: p.address || '', tel: p.tel || '', lng: parseFloat(c[0]) || 0, lat: parseFloat(c[1]) || 0 };
+      });
+    }
+  } catch(e) {}
+  return [];
+}
+
+// ========== DIRECTION: WALKING ==========
+async function walkingDirection(fromLng, fromLat, toLng, toLat, apiKey) {
+  try {
+    var data = await amapRequest('direction/walking', {
+      origin: fromLng + ',' + fromLat,
+      destination: toLng + ',' + toLat
+    }, apiKey);
+    if (data.status === '1' && data.route && data.route.paths && data.route.paths.length > 0) {
+      return { mode:'walking', mode_label:'步行', duration: parseInt(data.route.paths[0].duration) || 0, distance: parseInt(data.route.paths[0].distance) || 0 };
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ========== DIRECTION: BICYCLING ==========
+async function bicyclingDirection(fromLng, fromLat, toLng, toLat, apiKey) {
+  try {
+    var data = await amapRequest('direction/bicycling', {
+      origin: fromLng + ',' + fromLat,
+      destination: toLng + ',' + toLat
+    }, apiKey);
+    if (data.status === '1' && data.data && data.data.paths && data.data.paths.length > 0) {
+      return { mode:'bicycling', mode_label:'骑行', duration: parseInt(data.data.paths[0].duration) || 0, distance: parseInt(data.data.paths[0].distance) || 0 };
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ========== DIRECTION: DRIVING ==========
+async function drivingDirection(fromLng, fromLat, toLng, toLat, apiKey) {
+  try {
+    var data = await amapRequest('direction/driving', {
+      origin: fromLng + ',' + fromLat,
+      destination: toLng + ',' + toLat,
+      strategy: 10
+    }, apiKey);
+    if (data.status === '1' && data.route && data.route.paths && data.route.paths.length > 0) {
+      return { mode:'driving', mode_label:'开车', duration: parseInt(data.route.paths[0].duration) || 0, distance: parseInt(data.route.paths[0].distance) || 0 };
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ========== DIRECTION: TRANSIT ==========
+async function transitDirection(fromLng, fromLat, toLng, toLat, city, apiKey) {
+  try {
+    var data = await amapRequest('direction/transit/integrated', {
+      origin: fromLng + ',' + fromLat,
+      destination: toLng + ',' + toLat,
+      city: city,
+      strategy: 0,
+      extensions: 'base',
+      nightflag: 0
+    }, apiKey);
+    if (data.status === '1' && data.route && data.route.transits && data.route.transits.length > 0) {
+      var t = data.route.transits[0];
+      var totalDuration = parseInt(t.duration) || 0;
+      var walkingDistance = parseInt(t.walking_distance) || 0;
+      var walkTime = 0;
+      var segments = t.segments || [];
+      var transitSegments = [];
+      for (var si = 0; si < segments.length; si++) {
+        var wi = segments[si].walking;
+        if (wi && wi.duration) walkTime += parseInt(wi.duration) || 0;
+        var bi = segments[si].bus;
+        if (bi && bi.buslines && bi.buslines.length > 0) {
+          var bl = bi.buslines[0];
+          var bn = bl.name || '';
+          if (bn.indexOf('(') > 0) bn = bn.split('(')[0];
+          transitSegments.push({ name: bn, stations: (bl.via_stops || []).length });
+        }
+      }
+      var transitTime = totalDuration - walkTime;
+      return { mode:'transit', mode_label:'公共交通', total_duration: totalDuration, transit_time: transitTime, walking_time: walkTime, walking_distance: walkingDistance, transit_detail: transitSegments };
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ========== BEST DIRECTION (try all 4, pick fastest) ==========
+async function bestDirection(fromLng, fromLat, toLng, toLat, city, apiKey) {
+  // Fire all 4 in parallel (with small delay to avoid rate limit)
+  var results = [];
+
+  var w = await walkingDirection(fromLng, fromLat, toLng, toLat, apiKey);
+  if (w) results.push(w);
+  await sleep(250);
+
+  var b = await bicyclingDirection(fromLng, fromLat, toLng, toLat, apiKey);
+  if (b) results.push(b);
+  await sleep(250);
+
+  var d = await drivingDirection(fromLng, fromLat, toLng, toLat, apiKey);
+  if (d) results.push(d);
+  await sleep(300);
+
+  var t = await transitDirection(fromLng, fromLat, toLng, toLat, city, apiKey);
+  if (t) results.push(t);
+
+  if (results.length === 0) return null;
+
+  // Sort by duration, pick fastest
+  results.sort(function(a, b) { return a.duration - b.duration; });
+  var fastest = results[0];
+
+  if (fastest.mode === 'transit') {
+    return {
+      mode: 'transit',
+      mode_label: '公共交通',
+      total_minutes: fastest.total_duration / 60,
+      transit_minutes: fastest.transit_time / 60,
+      walking_minutes: fastest.walking_time / 60,
+      walking_distance: fastest.walking_distance,
+      lines: (fastest.transit_detail || []).map(function(s) { return { name: s.name, stations: s.stations }; }),
+      duration_seconds: fastest.total_duration
+    };
+  } else {
+    return {
+      mode: fastest.mode,
+      mode_label: fastest.mode_label,
+      total_minutes: fastest.duration / 60,
+      transit_minutes: 0,
+      walking_minutes: fastest.duration / 60,
+      walking_distance: fastest.distance,
+      lines: [],
+      duration_seconds: fastest.duration
+    };
+  }
+}
+
+// ========== COMPUTE ==========
+async function compute(persons, keyword, city, maxVenues, apiKey) {
+  // Step 1: collect venues from all persons
+  var venueMap = {};
+  for (var pi = 0; pi < persons.length; pi++) {
+    var p = persons[pi];
+    document.getElementById('loadingStep').textContent = '正在搜索第 ' + (pi+1) + '/' + persons.length + ' 人附近的' + keyword + '...';
+    updateProgress((pi / persons.length) * 30);
+    var venues = await placeAround(p.lng, p.lat, keyword, apiKey, maxVenues);
+    await sleep(300);
+    for (var vi = 0; vi < venues.length; vi++) {
+      var v = venues[vi];
+      var key = v.lng.toFixed(5) + ',' + v.lat.toFixed(5);
+      if (!venueMap[key]) {
+        venueMap[key] = v;
+      }
+    }
+  }
+
+  var venueList = [];
+  for (var k in venueMap) venueList.push(venueMap[k]);
+
+  if (venueList.length === 0) throw new Error('未找到任何"' + keyword + '"，请尝试其他关键词');
+
+  // Step 2: compute commute for each person to each venue
+  var allResults = [];
+  for (var vi = 0; vi < venueList.length; vi++) {
+    var v = venueList[vi];
+    document.getElementById('loadingStep').textContent = '正在计算第 ' + (vi+1) + '/' + venueList.length + ' 个场馆的通勤时间...';
+    updateProgress(30 + (vi / venueList.length) * 60);
+
+    var venueCommutes = { venue: v, persons: [] };
+    var hasError = false;
+
+    for (var pi = 0; pi < persons.length; pi++) {
+      var p = persons[pi];
+      var result = await bestDirection(p.lng, p.lat, v.lng, v.lat, city, apiKey);
+      await sleep(100);
+
+      if (result) {
+        venueCommutes.persons.push({
+          label: p.label,
+          address: p.address,
+          mode: result.mode,
+          mode_label: result.mode_label,
+          total_minutes: result.total_minutes,
+          transit_minutes: result.transit_minutes,
+          walking_minutes: result.walking_minutes,
+          walking_distance: result.walking_distance,
+          lines: result.lines || []
+        });
+      } else {
+        hasError = true;
+        venueCommutes.persons.push({
+          label: p.label, address: p.address,
+          mode: 'unknown', mode_label: '未知',
+          total_minutes: 999, transit_minutes: 0, walking_minutes: 0, walking_distance: 0, lines: []
+        });
+      }
+    }
+
+    if (!hasError) {
+      var times = venueCommutes.persons.map(function(p) { return p.total_minutes; });
+      var maxTime = Math.max.apply(null, times);
+      var totalTime = times.reduce(function(a, b) { return a + b; }, 0);
+      var avgTime = totalTime / times.length;
+      allResults.push({ max_time: maxTime, total_time: totalTime, avg_time: avgTime, venue: v, persons: venueCommutes.persons });
+    }
+  }
+
+  allResults.sort(function(a, b) {
+    if (a.max_time !== b.max_time) return a.max_time - b.max_time;
+    return a.total_time - b.total_time;
+  });
+
+  // Center point
+  var centerLng = 0, centerLat = 0;
+  persons.forEach(function(p) { centerLng += p.lng; centerLat += p.lat; });
+  centerLng /= persons.length;
+  centerLat /= persons.length;
+
+  return {
+    center: { lng: centerLng, lat: centerLat },
+    persons: persons.map(function(p) { return { label: p.label, address: p.address, name: p.name }; }),
+    venues_sorted: allResults,
+    best: allResults.length > 0 ? allResults[0] : null
+  };
+}
+
+// ========== RENDER ==========
+function formatLines(lines) {
+  var html = '';
+  (lines || []).forEach(function(l, i) {
+    if (i > 0) html += '<span class="route-arrow">&#8594;</span>';
+    var name = (l.name || '').length > 12 ? (l.name || '').substring(0, 12) + '...' : (l.name || '');
+    var stationText = l.stations > 0 ? '(' + l.stations + '站)' : '';
+    html += '<span class="route-chip chip-transit">' + name + stationText + '</span>';
+  });
+  return html;
+}
+
+function formatRoute(p) {
+  var mode = (p.mode || '').toLowerCase();
+  if (mode === 'walking') {
+    return '<span class="route-chip chip-walk">步行 ' + Math.round(p.walking_minutes) + '分</span>';
+  }
+  if (mode === 'bicycling') {
+    return '<span class="route-chip chip-bike">骑行 ' + Math.round(p.total_minutes) + '分</span>';
+  }
+  if (mode === 'driving') {
+    return '<span class="route-chip chip-car">开车 ' + Math.round(p.total_minutes) + '分</span>';
+  }
+  if (mode === 'transit') {
+    var html = '';
+    var walkMin = Math.round(p.walking_minutes || 0);
+    if (walkMin > 0) {
+      html += '<span class="route-chip chip-walk">步行 ' + walkMin + '分</span><span class="route-arrow">&#8594;</span>';
+    }
+    if (p.lines && p.lines.length > 0) {
+      html += formatLines(p.lines);
+      html += '<span class="route-arrow">&#8594;</span><span class="route-chip chip-walk">到馆</span>';
+    }
+    return html;
+  }
+  return '<span class="route-chip chip-walk">' + (p.mode_label || '未知') + '</span>';
+}
+
+function renderResults(data) {
+  if (!data || data.error) { showToast(data ? data.error : '未知错误', true); return; }
+  var best = data.best;
+  if (!best) { showToast('未找到合适的汇合点', true); return; }
+  var venue = best.venue;
+
+  document.getElementById('winnerName').textContent = venue.name;
+  document.getElementById('winnerAddr').textContent = venue.address;
+  document.getElementById('winnerTel').textContent = venue.tel ? '📞 ' + venue.tel : '';
+
+  var maxT = Math.round(best.max_time);
+  var totalT = Math.round(best.total_time);
+  var avgT = Math.round(best.avg_time);
+  var times = best.persons.map(function(p) { return p.total_minutes; });
+  var minT = Math.min.apply(null, times);
+
+  document.getElementById('statsRow').innerHTML =
+    '<div class="stat-box"><div class="stat-value color-warn">' + maxT + '<small>分</small></div><div class="stat-label">最大耗时</div></div>' +
+    '<div class="stat-box"><div class="stat-value color-good">' + totalT + '<small>分</small></div><div class="stat-label">总耗时</div></div>' +
+    '<div class="stat-box"><div class="stat-value color-accent">' + avgT + '<small>分</small></div><div class="stat-label">人均耗时</div></div>' +
+    '<div class="stat-box"><div class="stat-value color-good">' + Math.round(minT) + '<small>分</small></div><div class="stat-label">最快到达</div></div>';
+
+  var commuteList = document.getElementById('commuteList');
+  commuteList.innerHTML = '';
+  best.persons.forEach(function(p) {
+    var colorIdx = LABELS.indexOf(p.label) % PERSON_COLORS.length;
+    var totalMin = Math.round(p.total_minutes);
+    var routeHtml = formatRoute(p);
+    var ratio = totalMin / maxT;
+    var color = ratio < 0.6 ? 'var(--success)' : ratio < 0.85 ? 'var(--warning)' : 'var(--danger)';
+
+    commuteList.innerHTML +=
+      '<div class="commute-item">' +
+        '<div class="commute-label person-' + PERSON_COLORS[colorIdx] + '">' + p.label + '</div>' +
+        '<div class="commute-from">' + p.address + '</div>' +
+        '<div class="commute-route">' +
+          '<span class="route-chip" style="background:rgba(99,102,241,0.15);color:var(--accent-light);font-size:10px;">' + (p.mode_label || '未知') + '</span>' +
+          ' ' + routeHtml +
+        '</div>' +
+        '<div class="commute-time" style="color:' + color + '">' + totalMin + '<small>分</small></div>' +
+      '</div>';
+  });
+
+  var reasons = [];
+  reasons.push(best.persons.length + '人中最大单人耗时仅 <strong style="color:var(--warning)">' + maxT + ' 分钟</strong>，在所有 ' + data.venues_sorted.length + ' 个候选场馆中最低');
+  reasons.push(best.persons.length + '人总通勤时间 ' + totalT + ' 分钟，平均每人 ' + avgT + ' 分钟');
+  var fastestPerson = best.persons[0];
+  best.persons.forEach(function(p) { if (p.total_minutes < fastestPerson.total_minutes) fastestPerson = p; });
+  reasons.push(fastestPerson.label + '（' + fastestPerson.address + '）最快，仅需 ' + Math.round(fastestPerson.total_minutes) + ' 分钟');
+  reasons.push('耗时差值 ' + (maxT - Math.round(minT)) + ' 分钟，时间相对均衡');
+  document.getElementById('reasonList').innerHTML = reasons.map(function(r) { return '<li>' + r + '</li>'; }).join('');
+
+  var rankBody = document.getElementById('rankBody');
+  rankBody.innerHTML = '';
+  data.venues_sorted.forEach(function(v, i) {
+    var isBest = i === 0;
+    var nm = v.venue.name;
+    if (nm.length > 28) nm = nm.substring(0, 28) + '...';
+    rankBody.innerHTML +=
+      '<tr class="' + (isBest ? 'rank-row-best' : '') + '">' +
+        '<td><span class="rank-num ' + (isBest ? 'rank-1' : 'rank-other') + '">' + (i+1) + '</span></td>' +
+        '<td class="rank-name" title="' + v.venue.name + '">' + nm + '</td>' +
+        '<td style="color:' + (isBest ? 'var(--warning)' : 'var(--text-secondary)') + '">' + Math.round(v.max_time) + '分</td>' +
+        '<td>' + Math.round(v.total_time) + '分</td>' +
+        '<td>' + Math.round(v.avg_time) + '分</td>' +
+      '</tr>';
+  });
+
+  document.getElementById('resultsSection').classList.add('active');
+  document.getElementById('resultsSection').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ========== ENTRY POINT ==========
+async function startCompute() {
+  var apiKey = (document.getElementById('apiKey').value || '').trim();
+  if (!apiKey) { showToast('请输入高德 Web API Key', true); return; }
+
+  var locations = getLocations();
+  if (locations.length < 2) { showToast('请至少输入 2 个出发地', true); return; }
+
+  var keyword = (document.getElementById('keyword').value || '').trim() || '羽毛球馆';
+  var city = '杭州';
+  var maxVenues = parseInt(document.getElementById('maxVenues').value) || 15;
+  if (maxVenues < 5) maxVenues = 5;
+  if (maxVenues > 30) maxVenues = 30;
+
+  var btn = document.getElementById('computeBtn');
+  btn.disabled = true;
+  showLoading('正在为 ' + locations.length + ' 人搜索"' + keyword + '"...', '地理编码中...');
+
+  try {
+    // Step 1: Geocode all locations
+    var persons = [];
+    for (var i = 0; i < locations.length; i++) {
+      document.getElementById('loadingStep').textContent = '正在编码第 ' + (i+1) + '/' + locations.length + ' 个地址...';
+      var geo = await geocode(locations[i].address, city, apiKey);
+      if (geo) {
+        geo.label = locations[i].label;
+        persons.push(geo);
+      }
+      await sleep(200);
+    }
+    if (persons.length < 2) throw new Error('需要至少 2 个有效地址');
+
+    // Step 2: Compute
+    var result = await compute(persons, keyword, city, maxVenues, apiKey);
+    hideLoading();
+    renderResults(result);
+
+  } catch (err) {
+    hideLoading();
+    showToast('计算出错: ' + err.message, true);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ========== PRESETS ==========
+function loadPreset(type) {
+  document.getElementById('locationList').innerHTML = '';
+  locationCount = 0;
+  if (type === 'badminton') {
+    document.getElementById('keyword').value = '羽毛球馆';
+    addLocation('翠翎公寓');
+    addLocation('广宇锦绣桃源');
+    addLocation('南方泵业股份有限公司');
+    addLocation('城西银泰城');
+    addLocation('客运中心站');
+  } else if (type === 'coffee') {
+    document.getElementById('keyword').value = '咖啡厅';
+    addLocation('西湖文化广场');
+    addLocation('钱江新城');
+    addLocation('滨江宝龙城');
+  } else if (type === 'clear') {
+    document.getElementById('keyword').value = '羽毛球馆';
+    addLocation();
+    addLocation();
+    addLocation();
+  }
+  document.getElementById('resultsSection').classList.remove('active');
+}
+
+// Init
+addLocation();
+addLocation();
+addLocation();
+</script>
+</body>
+</html>
